@@ -16,9 +16,9 @@ Listedeki tüm maddelerin aynı anda uygulanması beklenmez. Öncelikli maddeler
 
 ## Context
 
-Geleneksel yazılımda bir sisteme aynı girdi verildiğinde her zaman aynı çıktı alınır. Bu durum testleri ve güvenlik kontrollerini öngörülebilir kılar. Dil modelleri ise aynı soruya farklı zamanlarda farklı yanıtlar üretebilir. Bu belirsizlik, mevcut güvenlik testlerinin tek başına yeterli olmadığı anlamına gelir.
+Birçok geleneksel yazılım bileşeni belirli koşullarda daha öngörülebilir biçimde test edilebilirken, LLM çıktıları model sürümü, bağlam, sistem talimatları ve üretim ayarlarına bağlı olarak değişkenlik gösterebilir. Bu belirsizlik, mevcut güvenlik testlerinin tek başına yeterli olmadığı anlamına gelir.
 
-Bunun yanında, yapay zeka sistemleri "prompt injection" adıyla bilinen yeni bir saldırı türüne karşı savunmasızdır. Bu saldırıda kötü niyetli bir kullanıcı, modeli istenmeyen biçimlerde davranmaya yönlendiren özel bir metin yazar. Geleneksel güvenlik araçları — güvenlik duvarı, statik kod analizi gibi çözümler — bu tür saldırıları büyük ölçüde fark edemez. Güvenlik artık yalnızca ağ ve uygulama katmanında değil, dilin ve anlamın kendisinde de sağlanmak zorundadır.
+Bunun yanında, yapay zeka sistemleri "prompt injection" adıyla bilinen yeni bir saldırı türüne karşı savunmasızdır. Bu saldırı yalnızca kötü niyetli bir kullanıcının özel bir metin yazmasıyla gerçekleşmez; aynı zamanda işlenen web sitelerinden, yüklenen belgelerden, dış veri kaynaklarından veya araç çıktılarından da (dolaylı olarak) kaynaklanabilir. Geleneksel güvenlik araçları — güvenlik duvarı, statik kod analizi gibi çözümler — bu tür saldırıları büyük ölçüde fark edemez. Girdi temizleme (input cleaning) ve sistem talimatlarını kullanıcı mesajlarından ayırma faydalı kontroller olsa da, tek başlarına koruma garantisi vermezler; bu yöntemler mutlaka en az yetki, çıktı doğrulama, dış içerik izolasyonu, yüksek etkili işlemler için insan onayı ve sürekli testlerle (adversarial testing) desteklenmelidir.
 
 Son olarak, harici bir yapay zeka servisi kullanıldığında o servisin güvenlik açıkları da ürünün sorunu haline gelir. Modeli kimin eğittiği, hangi verilerle beslendiği ve servis sağlayıcısının altyapısının ne kadar güvenli olduğu; doğrudan kontrol edilemeyen ancak ürünü doğrudan etkileyen unsurlardır.
 
@@ -28,27 +28,23 @@ Son olarak, harici bir yapay zeka servisi kullanıldığında o servisin güvenl
 
 Türkiye'de faaliyet gösteren veya Türkiye'de kullanıcısı bulunan ürün ekipleri için yapay zeka güvenliği yalnızca teknik bir konu değil, aynı zamanda yasal bir yükümlülüktür.
 
-**KVKK (Kişisel Verileri Koruma Kanunu):** 6698 sayılı KVKK, kişisel verilerin toplanması, işlenmesi ve üçüncü taraflarla paylaşılması konusunda net yükümlülükler getirir. Kullanıcı verilerinin bir yapay zeka API'sine kontrolsüz biçimde gönderilmesi, teknik bir sorunun ötesinde doğrudan yasal sorumluluk doğurabilir. Veri işleme faaliyetlerinin belgelenmesi, açık rıza alınması ve veri aktarım sözleşmelerinin yapılması bu kapsamda zorunludur.
+**KVKK ve GDPR Etkisi:** Kişisel verilerin işlenmesi ve harici yapay zeka API sağlayıcılarına aktarılması; uygulanabilir hukuki zemin, şeffaflık yükümlülükleri, veri minimizasyonu ilkeleri ve sınır ötesi aktarım kuralları çerçevesinde değerlendirilmelidir. Açık rıza tek hukuki zemin olmayabileceği gibi, her durumda bir aktarım sözleşmesi zorunlu olmayabilir; ancak veri akışının ve bağlamın doğru analiz edilmesi şarttır. Erken aşama ekipler, gerekli durumlarda uzman hukuki görüş almalıdır. Ayrıca GDPR'ın otomatik olarak uygulanmayabileceği, kurumsal yerleşim yeri veya AB içindeki kişilere ürün/hizmet sunma ya da davranışlarını izleme gibi faktörlere bağlı olduğu unutulmamalıdır.
 
-**GDPR Etkisi:** Avrupa Birliği'ndeki kullanıcılara hizmet verilmesi durumunda GDPR hükümleri de geçerli olur. Her iki düzenleme de veri minimizasyonunu, amaca sınırlılığı ve güvenli veri aktarımını temel ilke olarak benimsemektedir.
-
-**Düzenleyici Ortam:** Türkiye'de KVKK uygulamalarının giderek güçlendiği ve denetim kapsamının genişlediği görülmektedir. Yapay zeka ürün kararlarının bu yasal çerçeve içinde değerlendirilmesi, ileride oluşabilecek idari yaptırımların önüne geçmek açısından kritik önem taşır.
+Türkiye'de KVKK uygulamalarının giderek güçlendiği ve denetim kapsamının genişlediği görülmektedir. Yapay zeka ürün kararlarının bu yasal çerçeve içinde değerlendirilmesi, ileride oluşabilecek idari yaptırımların önüne geçmek açısından kritik önem taşır.
 
 ---
 
 ## Safety Areas
 
-Bu kontrol listesi beş temel güvenlik alanını kapsamaktadır:
+Bu kontrol listesi aşağıdaki temel güvenlik alanlarını kapsamaktadır:
 
 **1. Girdi ve Çıktı Denetimi:** Kullanıcıdan gelen verilerin modele iletilmeden önce doğrulanması; modelden dönen yanıtların kullanıcıya sunulmadan önce kontrol edilmesi.
-
-**2. İstek Hacmi Kontrolü (Rate Limiting):** Hem kötüye kullanımı hem de beklenmedik maliyetleri önlemek amacıyla kullanıcı ve oturum bazında istek sayısının sınırlandırılması.
-
-**3. Onay Gerektiren İşlemler:** Geri alınamaz veya yüksek etkili işlemler için kullanıcının açık onayının alınması ve bu işlemlerin kayıt altına alınması.
-
-**4. Kayıt ve İzleme (Logging & Monitoring):** Model etkileşimlerinin kişisel veri korumasına uygun biçimde günlüklenmesi ve olağandışı davranışların otomatik olarak tespit edilmesi.
-
-**5. Harici Servis Yönetimi:** Harici yapay zeka API'leriyle paylaşılan verilerin sınırlandırılması, sağlayıcı sözleşmelerinin incelenmesi ve servisin ulaşılamadığı durumlara karşı hazırlıklı olunması.
+**2. En Az Yetki ve Araç Sınırları (Tool Permission Boundaries):** Modellere sınırsız araç erişimi veya geniş yetkili kimlik bilgileri verilmemesi.
+**3. Şeffaflık (User Transparency):** Kullanıcılara arka planda yapay zeka kullanıldığının açıkça bildirilmesi.
+**4. Onay Gerektiren İşlemler:** Geri alınamaz veya yüksek etkili işlemler için kullanıcının açık onayının alınması.
+**5. Kayıt ve İzleme (Logging & Monitoring):** Veri minimizasyonu prensibiyle kayıt tutulması ve olağandışı davranışların tespit edilmesi.
+**6. Güvenli Hata ve Acil Durum (Fail-Safe & Incident Response):** Güvenli olmayan veya doğrulanamayan eylemlerin güvenli bir şekilde reddedilmesi ve gerektiğinde AI özelliğinin kapatılabilmesi, izole edilebilmesi veya geri alınabilmesi.
+**7. Harici Servis Yönetimi:** API sağlayıcılarının güvenlik politikalarının denetlenmesi ve veri sızıntısının önlenmesi.
 
 ---
 
@@ -57,68 +53,73 @@ Bu kontrol listesi beş temel güvenlik alanını kapsamaktadır:
 ### 1. Girdi ve Çıktı Denetimi
 
 - [ ] **Kullanıcıdan gelen her metin, modele gönderilmeden önce kontrol edilir ve temizlenir.**  
-  Girdilerin uzunluk sınırı, kabul edilebilir karakter kümesi ve içerik türü önceden tanımlanmalıdır. "Beklenen formatta mı?" sorusunun yanı sıra "bu sistem bağlamı için uygun mu?" sorusu da değerlendirilmelidir. Kullanıcı metni hiçbir zaman doğrudan sistem talimatlarına eklenmemeli; her zaman ayrı bir kullanıcı mesajı bloğu olarak işlenmelidir.
+  Girdilerin uzunluk sınırı, kabul edilebilir karakter kümesi ve içerik türü önceden tanımlanmalıdır. Kullanıcı metni hiçbir zaman doğrudan sistem talimatlarına eklenmemeli; her zaman ayrı bir kullanıcı mesajı bloğu olarak işlenmelidir.
 
 - [ ] **Modelden gelen yanıtlar, kullanıcıya gösterilmeden veya başka bir sisteme iletilmeden önce bir denetim aşamasından geçirilir.**  
-  Yapay zekanın üretebileceği zararlı içerik kategorilerinin önceden listelenmesi ve bu kategorileri yakalayan bir filtre katmanı oluşturulması önerilir. Bu katman kural tabanlı olabileceği gibi başka bir modelle de uygulanabilir. Model çıktısı otomatik olarak çalıştırılacaksa (örneğin kod veya veritabanı sorgusu), söz konusu işlem izole bir ortamda gerçekleştirilmelidir.
+  Yapay zekanın üretebileceği zararlı içerik kategorilerinin önceden listelenmesi ve bu kategorileri yakalayan bir filtre katmanı oluşturulması önerilir. Model çıktısı otomatik olarak çalıştırılacaksa (örneğin kod veya veritabanı sorgusu), söz konusu işlem izole bir ortamda gerçekleştirilmelidir.
 
-- [ ] **Sistem talimatları ile kullanıcı girdisi yapısal olarak birbirinden ayrılır ve kullanıcı bu sınırı aşamaz.**  
-  Şablon yapıları sabit tutulmalı; değişken içerikler yalnızca veri düzeyinde eklenmeli, talimat düzeyinde birbirine karıştırılmamalıdır. Bu ayrımın kod incelemelerinde ve testlerde düzenli olarak doğrulandığından emin olunmalıdır.
+- [ ] **Sistem talimatları ile kullanıcı girdisi yapısal olarak birbirinden ayrılır.**  
+  Şablon yapıları sabit tutulmalı; değişken içerikler yalnızca veri düzeyinde eklenmeli, talimat düzeyinde birbirine karıştırılmamalıdır. Bu ayrım faydalı bir kontrol olmakla birlikte enjeksiyonları tamamen önlemez; çıktı doğrulama ve en az yetkiyle birleştirilmelidir.
 
 ---
 
-### 2. İstek Hacmi Kontrolü (Rate Limiting)
+### 2. En Az Yetki, Şeffaflık ve Güvenli Hata
 
-- [ ] **Her kullanıcı veya oturum için belirli bir zaman diliminde yapılabilecek istek sayısı sınırlandırılır.**  
-  Dakikalık, saatlik ve günlük istek kotaları belirlenmeli; bu kotalar kullanıcı kimliği, IP adresi veya oturum bilgisi üzerinden takip edilmelidir. Anormal istek artışlarını otomatik olarak tespit eden bir uyarı mekanizması kurulmalıdır. Limit aşımlarında kullanıcıya standart HTTP 429 yanıtı döndürülmeli ve yeniden deneme süresi bildirilmelidir.
+- [ ] **Modelin çağırabileceği fonksiyonlara (tools) sağlanan kimlik bilgileri en az yetki (least privilege) prensibiyle sınırlandırılır.**  
+  Modele veya AI ajanlarına hiçbir zaman sisteme tam erişim (admin) yetkisi verilmemeli; yalnızca görevini yerine getirebileceği kadar kısıtlı erişim sağlanmalıdır.
 
-- [ ] **Yapay zeka çağrılarının toplam maliyeti sistem genelinde izlenir ve bir üst sınıra bağlanır.**  
-  Her token tüketimi doğrudan bir maliyete karşılık gelir. Kullanıcı veya hesap başına günlük ve aylık harcama limitleri tanımlanmalıdır. Limitlerin yüzde seksenine ulaşıldığında ekibi uyaran bir alarm kurulmalıdır. Limit aşımında sistemin nasıl davranacağı (sert durdurma ya da kullanıcıyı bilgilendirerek devam etme) önceden belirlenmeli ve kayıt altına alınmalıdır.
+- [ ] **Sistem, kullanıcılara bir yapay zeka modeliyle etkileşime girdiklerini açıkça bildirir.**  
+  Kullanıcılar, bir yapay zeka ürünü kullandıkları konusunda bilgilendirilmeli ve modelin yanılıp halüsinasyon görebileceği (hallucination) şeffaf bir şekilde paylaşılmalıdır.
+
+- [ ] **Sistem, güvensiz işlemlerde "güvenli hata" (fail-safe) modunda çalışacak şekilde tasarlanmıştır.**  
+  Modelin isteği doğrulanamadığında, şüpheli bir içerik tespit edildiğinde veya belirsizlik oluştuğunda sistem varsayılan olarak eylemsiz kalmalı, işlemi güvenli bir şekilde reddetmelidir.
 
 ---
 
 ### 3. Onay Gerektiren İşlemler
 
 - [ ] **Geri alınamaz veya yüksek etkili işlemler yapay zeka tarafından doğrudan tetiklenemez; önce kullanıcı onayı alınmalıdır.**  
-  Veri silme, e-posta gönderme, ödeme başlatma ve harici servise bağlanma gibi işlemler bu kapsamdadır. Yapay zekanın gerçekleştirebileceği tüm işlemler "düşük etkili" ve "yüksek etkili" olarak sınıflandırılmalıdır. Yüksek etkili işlemler için kullanıcıya yapılacak işlem açıkça özetlenmeli ve işleme devam etmek için açık bir onay talep edilmelidir.
+  Veri silme, e-posta gönderme, ödeme başlatma ve harici servise bağlanma gibi işlemler bu kapsamdadır. Yüksek etkili işlemler için kullanıcıya yapılacak işlem açıkça özetlenmeli ve işleme devam etmek için açık bir onay talep edilmelidir.
 
-- [ ] **Kullanıcı adına gerçekleştirilen her otomatik işlem, kim tarafından, ne zaman ve hangi gerekçeyle yapıldığını gösteren bir kayıt bırakır.**  
-  Bu kayıtlar şeffaflık açısından ve ileride yaşanabilecek sorunların geriye dönük incelenmesi için gereklidir. Kayıtlara kullanıcılar tarafından erişilememeli ve değiştirilememeli; yalnızca yetkili sistem yöneticileri bu kayıtlara ulaşabilmelidir.
+- [ ] **Kullanıcı adına gerçekleştirilen her otomatik işlem iz bırakır.**  
+  Bu kayıtlar şeffaflık açısından ve ileride yaşanabilecek sorunların geriye dönük incelenmesi için gereklidir.
 
 ---
 
-### 4. Kayıt ve İzleme (Logging & Monitoring)
+### 4. Kayıt, İzleme ve Acil Durum (Incident Response)
 
-- [ ] **Modele gönderilen mesajlar ve alınan yanıtlar, kişisel bilgiler gizlenerek kaydedilir ve belirli bir süre saklanır.**  
-  Bu kayıtlar hem hata ayıklamak hem de güvenlik olaylarını ilerleyen dönemde incelemek için gereklidir. KVKK ve GDPR kapsamında isim, e-posta, kimlik numarası gibi kişisel veriler kaydedilmeden önce gizlenmeli veya anonim hale getirilmelidir. Kayıtların saklama süresi ve erişim yetkileri yazılı bir politikayla belirlenmelidir.
+- [ ] **Kayıt tutma işlemleri (logging) veri minimizasyonu ilkelerine uygun olarak yürütülür.**  
+  Gerekli ve haklı bir gerekçe olmadığı sürece ham (raw) içerik kaydedilmemeli, bunun yerine içerikten bağımsız teknik metaveriler (metadata) tercih edilmelidir. Loglama zorunluysa hassas veriler maskelenmeli, rol bazlı erişim uygulanmalı ve belirli bir saklama süresi tanımlanmalıdır. Güvenlik günlükleri, kullanıcının gördüğü aktivite geçmişi ve yasal veri erişim hakları ayrı ayrı yönetilmelidir.
 
 - [ ] **Modelin olağandışı veya zararlı görünen çıktıları için otomatik bir uyarı sistemi kurulur.**  
-  Belirli içerik kategorileri tespit edildiğinde ekibi bilgilendiren bir mekanizma oluşturulmalıdır. Bu uyarılar e-posta, anlık mesajlaşma veya bir olay takip aracı aracılığıyla iletilebilir. Yanlış alarm oranı düzenli olarak gözden geçirilmeli ve uyarı eşikleri buna göre ayarlanmalıdır.
+  Belirli içerik kategorileri tespit edildiğinde ekibi bilgilendiren bir mekanizma oluşturulmalıdır.
+
+- [ ] **Ekiplerin bir güvenlik olayı anında sistemi kapatabileceği veya geri alabileceği bir mekanizma mevcuttur.**  
+  Model kontrolden çıktığında veya bir zafiyet sömürüldüğünde, ilgili AI özelliğini tamamen kapatacak (kill switch), izole edecek veya güvenli eski bir duruma döndürecek (rollback) acil durum planı hazır olmalıdır.
 
 ---
 
 ### 5. Harici Servis Yönetimi
 
-- [ ] **Bulut tabanlı bir yapay zeka API'sine hangi verilerin gönderildiği açıkça tanımlanır; hassas ve kişisel veriler bu kapsamın dışında tutulur.**  
-  Hangi veri kategorilerinin dışarıya iletildiği yazılı olarak belgelenmelidir. Kullanıcı kimlik bilgileri, sözleşme içerikleri, sağlık verileri ve finansal bilgiler gibi hassas içeriklerin modele gönderilmesi teknik yöntemlerle engellenmelidir. "Yalnızca gerekli olanı gönder" ilkesi, sistem tasarımının temel kuralı haline getirilmelidir.
+- [ ] **Bulut tabanlı bir yapay zeka API'sine hangi verilerin gönderildiği açıkça tanımlanır.**  
+  Kullanıcı kimlik bilgileri, sözleşme içerikleri, sağlık verileri ve finansal bilgiler gibi hassas içeriklerin modele gönderilmesi teknik yöntemlerle engellenmelidir. "Yalnızca gerekli olanı gönder" ilkesi, sistem tasarımının temel kuralı haline getirilmelidir.
 
-- [ ] **Kullanılan her harici modelin veri saklama ve eğitim politikası incelenir; hizmet sözleşmesinin güvenlik gereksinimleriyle uyumlu olduğu doğrulanır.**  
-  Sağlayıcının gönderilen mesajları model eğitiminde kullanıp kullanmadığı, ne kadar süre sakladığı ve veri işleme sözleşmesi sunup sunmadığı araştırılmalıdır. Gerektiğinde veri saklamayan veya kurumsal planlara geçiş değerlendirilmelidir. Yeni bir model veya sağlayıcı eklendiğinde bu kontroller tekrarlanmalıdır.
-
-- [ ] **Harici servisin çalışmadığı durumlar için önceden alternatif bir plan tasarlanmalıdır.**  
-  Harici bir servise tamamen bağımlı olmak, o servis çöktüğünde tüm sisteminizin de durması anlamına gelir. Kritik özellikler için yedek bir model, önceden hazırlanmış bir yanıt veya kullanıcıyı bilgilendiren basit bir alternatif akış tasarlanmalıdır. Bu bağımlılıkları düzenli aralıklarla test eden otomatik bir sağlık kontrolü kurulmalıdır.
+- [ ] **Kullanılan her harici modelin veri saklama politikası incelenir ve güvenlik testleri tekrarlanır.**  
+  Sağlayıcının verileri eğitimde kullanıp kullanmadığı araştırılmalı; model veya sağlayıcı her değiştirildiğinde sistemin mevcut güvenlik kontrolleri (promt injection filtreleri vb.) yeniden test edilmelidir.
 
 ---
 
 ## Common Mistakes
 
-Bu bölüm, güvenlik önlemlerinin alınmadığı veya geç alındığı durumlarda erken aşama ürün ekiplerinin sıkça karşılaştığı üç risk alanını özetlemektedir.
+Erken aşama ekiplerin güvenlik süreçlerinde en sık düştüğü pratik uygulama hataları şunlardır:
 
-**İtibar riski:** Yapay zeka özelliğinin kötüye kullanılması veya zararlı içerik üretmesi, özellikle büyüme aşamasındaki bir ürün için ciddi bir güven krizine yol açabilir. Kullanıcı tabanı henüz küçük olan bir üründe bu tür bir olay, aylarca süren büyüme çabasını kısa sürede geri alabilir.
-
-**Maliyet riski:** İstek sınırı uygulanmadan sunulan bir yapay zeka özelliği, kötü niyetli veya dikkatsiz kullanıcıların yol açtığı aşırı tüketimle beklenmedik faturalar doğurabilir. Token başına ücretlendirilen servislerde bu maliyet saatler içinde önemli rakamlara ulaşabilir; özellikle kullanıcı sayısının hızla arttığı dönemlerde bu risk belirginleşir.
-
-**Yasal risk:** KVKK ve GDPR gibi düzenlemeler, kişisel verilerin üçüncü taraflarla — harici yapay zeka sağlayıcıları dahil — nasıl paylaşılabileceğini belirler. Kullanıcı verilerinin kontrolsüz biçimde bir API'ye iletilmesi, yalnızca teknik bir güvenlik açığı değil aynı zamanda hukuki bir sorumluluk doğurur. Türkiye'de KVKK denetimlerinin kapsamının genişlemesi ve AB'deki yapay zeka düzenlemelerinin gelişmeye devam etmesi, bu riskin yakın vadede artacağına işaret etmektedir.
+- **Sadece girdi filtrelemeye güvenmek:** Girdi temizlemeyi (input filtering) prompt injection'a karşı tam ve kusursuz bir savunma sanmak. Gerçekte bu filtreler atlatılabilir; savunma mutlaka en az yetki, izole ortamlar ve insan onayı ile desteklenmelidir.
+- **Modele aşırı yetki vermek:** Modelin kullandığı araçlara (tools) veritabanını tamamen silme, sistemi okuma veya dışarıya yetkisiz istek atma gibi geniş ayrıcalıklar (excessive permissions) atamak.
+- **Tüm prompt ve yanıtları varsayılan olarak loglamak:** Ham kullanıcı mesajlarını (kişisel veya hassas veri içerip içermediğine bakmaksızın) maskeleme yapmadan, saklama süresi belirlemeden kaydetmek.
+- **Yüksek etkili eylemleri insan onayı olmadan çalıştırmak:** E-posta gönderme, satın alma yapma veya yetki değiştirme gibi işlemleri modelin doğrudan ve onaysız olarak yürütmesine izin vermek.
+- **Kullanıcılara yapay zeka kullanıldığını bildirmemek:** Kullanıcıyı, bir insanla veya %100 kesin (deterministik) sonuç üreten bir algoritmayla iletişim kurduğuna inandırmak.
+- **Kapatma (kill switch) veya olay müdahale planı oluşturmamak:** Model beklenmedik davrandığında veya saldırı altındayken özelliği hızlıca izole edecek veya kapatacak bir mekanizma (rollback/kill switch) tasarlamamak.
+- **Model değiştikten sonra kontrolleri test etmemek:** Farklı bir LLM modeline veya sağlayıcıya geçildiğinde, eski modelde çalışan güvenlik ve güvenlik bariyerlerinin yeni modelde de aynı şekilde işlediğini varsaymak.
 
 ---
 
@@ -144,13 +145,11 @@ Bu çalışmanın amacı saldırı yöntemlerini öğretmek değil, savunma odak
 
 Yapay zeka güvenliği; ürün tamamlandıktan sonra eklenen bir katman değil, baştan beri sistemin parçası olan bir tasarım kararıdır. Aşağıdaki çıkarımlar, bu listedeki maddelerin ortak paydası olarak değerlendirilebilir:
 
-- Kullanıcı girdisine hiçbir zaman doğrudan güvenilmemeli; doğrulama ve filtreleme varsayılan davranış olarak tasarlanmalıdır.
+- Kullanıcı girdisine veya dış veri kaynaklarına hiçbir zaman doğrudan güvenilmemeli; doğrulama ve filtreleme varsayılan davranış olmalıdır.
 - Maliyet ve istek hacmini pasif olarak izlemek yeterli değildir; aktif sınırlar ve otomatik uyarılar yapılandırılmalıdır.
-- Yüksek etkili işlemler her zaman kullanıcı onayına bağlanmalı ve bu işlemlerin izi kayıt altında tutulmalıdır.
-- Harici servislerin güvenliği, sistem güvenliğinin ayrılmaz bir parçasıdır; sağlayıcı politikaları sözleşme aşamasında dikkatle incelenmelidir.
-- Hiçbir güvenlik önlemi kalıcı değildir; tehdit ortamı değiştikçe kontrol listesi güncellenmeli ve yeniden test edilmelidir.
-
-**Sektörden Bir Örnek:** <cite index="2-1,3-1">Haziran 2026'da ABD hükümeti, ulusal güvenlik gerekçesiyle Anthropic'in Fable 5 ve Mythos 5 modellerine tüm yabancı uyruklular için erişimi askıya alan bir ihracat kontrol direktifi yayımladı.</cite> Sınır tanımayan yapay zeka modellerine erişim, "jailbreak" endişeleri ve hükümet müdahaleleri etrafındaki bu kamuoyu tartışmaları, yapay zeka ürün ekiplerinin model güvenliği, izleme, erişim kontrolü ve olay müdahalesini isteğe bağlı özelliklerden ziyade ürün düzeyinde riskler olarak ele alması gerektiğini göstermektedir.
+- Yüksek etkili işlemler her zaman kullanıcı onayına bağlanmalı ve bu işlemlerin izi veri minimizasyonuna uygun biçimde kayıt altında tutulmalıdır.
+- Harici servislerin güvenliği, sistem güvenliğinin ayrılmaz bir parçasıdır; sağlayıcı politikaları dikkatle incelenmeli ve model değişimlerinde testler yenilenmelidir.
+- Hiçbir güvenlik önlemi kalıcı değildir; tehdit ortamı değiştikçe kontrol listesi güncellenmeli ve sürekli yeniden test edilmelidir.
 
 ---
 
@@ -161,7 +160,7 @@ Yapay zeka güvenliği; ürün tamamlandıktan sonra eklenen bir katman değil, 
    - Publisher / organization: OWASP Foundation
    - URL: [https://owasp.org/www-project-top-10-for-large-language-model-applications/](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
    - Archived URL, if available: [https://web.archive.org/web/2025/https://owasp.org/www-project-top-10-for-large-language-model-applications/](https://web.archive.org/web/2025/https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-   - Accessed date: Temmuz 2026
+   - Accessed date: 13 Temmuz 2026
    - Why this source is relevant: LLM uygulamalarında en sık karşılaşılan 10 güvenlik riskini kategorilere ayıran, açık kaynak topluluğu tarafından güncellenen referans belgedir. Bu kontrol listesindeki maddelerin büyük bölümü bu çerçeveyle doğrudan örtüşmektedir.
 
 2. **NIST AI Risk Management Framework (AI RMF 1.0)**
@@ -169,44 +168,49 @@ Yapay zeka güvenliği; ürün tamamlandıktan sonra eklenen bir katman değil, 
    - Publisher / organization: National Institute of Standards and Technology (NIST)
    - URL: [https://www.nist.gov/system/files/documents/2023/01/26/AI%20RMF%201.0.pdf](https://www.nist.gov/system/files/documents/2023/01/26/AI%20RMF%201.0.pdf)
    - Archived URL, if available: [https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf](https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf)
-   - Accessed date: Temmuz 2026
+   - Accessed date: 13 Temmuz 2026
    - Why this source is relevant: ABD Ulusal Standartlar ve Teknoloji Enstitüsü'nün yapay zeka sistemleri için hazırladığı risk yönetimi çerçevesidir. Güvenilirlik, şeffaflık ve hesap verebilirlik ilkelerini somut uygulama adımlarıyla ele alır.
 
 3. **Anthropic — Sorumlu Ölçeklendirme Politikası**
    - Source title: Anthropic's Responsible Scaling Policy
    - Publisher / organization: Anthropic
    - URL: [https://www.anthropic.com/news/anthropics-responsible-scaling-policy](https://www.anthropic.com/news/anthropics-responsible-scaling-policy)
-   - Accessed date: Temmuz 2026
+   - Archived URL, if available: -
+   - Accessed date: 13 Temmuz 2026
    - Why this source is relevant: Anthropic'in model güvenliği, dağıtım politikaları ve güvenli sistem tasarımına ilişkin kamuya açık yaklaşımını belgeleyen birincil kaynaktır.
 
 4. **Microsoft — Sorumlu Yapay Zeka İlkeleri**
    - Source title: Microsoft Responsible AI Principles & Practices
    - Publisher / organization: Microsoft Corporation
    - URL: [https://www.microsoft.com/en-us/ai/responsible-ai](https://www.microsoft.com/en-us/ai/responsible-ai)
-   - Accessed date: Temmuz 2026
+   - Archived URL, if available: -
+   - Accessed date: 13 Temmuz 2026
    - Why this source is relevant: Büyük ölçekli yapay zeka ürünlerinde sorumlu kullanım ilkelerini, değerlendirme araçlarını ve kurumsal uygulama rehberlerini bir arada sunan sektörel bir referanstır.
 
 5. **MITRE ATLAS™ — Yapay Zeka Sistemlerine Yönelik Saldırı Haritası**
    - Source title: MITRE ATLAS™ (Adversarial Threat Landscape for Artificial-Intelligence Systems)
    - Publisher / organization: MITRE Corporation
    - URL: [https://atlas.mitre.org/](https://atlas.mitre.org/)
-   - Accessed date: Temmuz 2026
+   - Archived URL, if available: -
+   - Accessed date: 13 Temmuz 2026
    - Why this source is relevant: Gerçek dünyada yapay zeka ve makine öğrenmesi sistemlerine yönelik saldırı yöntemlerini belgeleyen, MITRE ATT&CK çerçevesinin yapay zekaya uyarlanmış halidir. Prompt injection dahil birçok saldırı tipini kategorilere ayırır.
 
 6. **AB Yapay Zeka Yasası — Resmi Metin (2024)**
    - Source title: Regulation (EU) 2024/1689 — Artificial Intelligence Act
    - Publisher / organization: Avrupa Birliği
    - URL: [https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689)
-   - Accessed date: Temmuz 2026
-   - Why this source is relevant: Yapay zeka sistemlerini risk düzeylerine göre sınıflandıran ve yüksek riskli uygulamalar için zorunlu gereksinimler getiren yasal düzenlemedir. Türkiye'den AB pazarına yönelik hizmet sunan ekipler için doğrudan bağlayıcı olabilir.
+   - Archived URL, if available: -
+   - Accessed date: 13 Temmuz 2026
+   - Why this source is relevant: Yapay zeka sistemlerini risk düzeylerine göre sınıflandıran ve aşamalı olarak uygulamaya konan (phased application) yürürlükteki yasal düzenlemedir. Türkiye'den AB pazarına yönelik hizmet sunan ekipler için doğrudan bağlayıcı olabilir.
 
 7. **KVKK — Kişisel Verileri Koruma Kurumu**
    - Source title: 6698 Sayılı Kişisel Verilerin Korunması Kanunu
    - Publisher / organization: Kişisel Verileri Koruma Kurumu (KVKK)
    - URL: [https://www.kvkk.gov.tr/Icerik/6649/6698-SAYILI-KANUN](https://www.kvkk.gov.tr/Icerik/6649/6698-SAYILI-KANUN)
-   - Accessed date: Temmuz 2026
+   - Archived URL, if available: -
+   - Accessed date: 13 Temmuz 2026
    - Why this source is relevant: Türkiye'de kişisel verilerin işlenmesine ilişkin temel yasal çerçeveyi belirleyen kanundur. Yapay zeka API'lerine veri iletimi bu kanun kapsamında değerlendirilmeli ve uyumluluk yükümlülükleri buna göre yerine getirilmelidir.
 
 ---
 
-*Bu içerik, [ai-safety-lab](https://github.com/ai-safety-lab) açık kaynak projesinin bir parçasıdır. Katkı sağlamak için projenin `CONTRIBUTING.md` dosyasını inceleyebilirsiniz.*
+*Bu yazı, [ai-safety-lab](https://github.com/TamgaTurkiye/ai-safety-lab) açık kaynak projesinin bir parçasıdır.*
